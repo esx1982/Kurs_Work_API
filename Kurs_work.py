@@ -6,11 +6,6 @@ import time
 import tqdm
 import json
 
-token_ya_disk = 'y0_AgAAAABv9VLAAADLWwAAAADqtyX8jyQqKMeDQDuZ4KFZ4hYsAtoMbaE'
-app_name = 'Photo_save_to_disk'
-app_id = '51732900'
-app_http = 'https://oauth.vk.com/authorize?client_id={app_id}&scope=65536&response_type=token'
-
 token = 'vk1.a.XnY8eUrSIxAiOsoysguL31wWVFF4bxWVYkIN-Ganex-o0c13IfLxY2452lq7M-CMHGcKxaW7GVtmrCVIuLKyaXmGruKG7kHZ05QuGw8NhhPagOt04CHzLjqgDh2v4FPJc9Tq6O-d6LNurugL9V-p1FEKMXrkOl2qxeccV5WfdMf6FuNwhKT9XR3AoUcrr-z-BDbViYkzVRCvHoXEMBZYCA'
 
 def get_token():
@@ -110,7 +105,7 @@ class VK_get_photo:
     def upload_photos(self):
         # params = {}
         base_url = 'https://cloud-api.yandex.net'
-        headers = {'Authorization': 'OAuth y0_AgAAAABv9VLAAADLWwAAAADqtyX8jyQqKMeDQDuZ4KFZ4hYsAtoMbaE'}
+        headers = {'Authorization': 'OAuth '}
         params = {'path': 'Image'}
         response = requests.put(f'{base_url}/v1/disk/resources', params=params, headers=headers)
         for i in tqdm.tqdm(self.file_dict['file_name']):
