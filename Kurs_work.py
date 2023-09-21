@@ -6,59 +6,47 @@ import time
 import tqdm
 import json
 
-token = 'vk1.a.XnY8eUrSIxAiOsoysguL31wWVFF4bxWVYkIN-Ganex-o0c13IfLxY2452lq7M-CMHGcKxaW7GVtmrCVIuLKyaXmGruKG7kHZ05QuGw8NhhPagOt04CHzLjqgDh2v4FPJc9Tq6O-d6LNurugL9V-p1FEKMXrkOl2qxeccV5WfdMf6FuNwhKT9XR3AoUcrr-z-BDbViYkzVRCvHoXEMBZYCA'
 
-def get_token():
-    oauth_base_url = 'https://oauth.vk.com/authorize'
-
-    params = {
-        'client_id': app_id,
-        'redirect_uri': 'https://oauth.vk.com/blank.html',
-        'display': 'page',
-        'scope': 'photos, status, audio',
-        'response_type': 'token'
-        }
-
-    oauth_url = f'{oauth_base_url}?{urlencode(params, doseq=False, safe="", encoding=None, errors=None, quote_via=quote_plus)}'
-    return oauth_url
 
 class VK_get_photo:
     API_base_url = 'https://api.vk.com/method'
+    app_id = '51732900'
 
-    def __init__(self, token, user_id):
-        self.token = token
+    def __init__(self, user_id):
+        self.token = ''
         self.user_id = user_id
         self.file_dict = {}
+
+    def get_token(self):
+        oauth_base_url = 'https://oauth.vk.com/authorize'
+
+        params = {
+            'client_id': self.app_id,
+            'redirect_uri': 'https://oauth.vk.com/blank.html',
+            'display': 'page',
+            'scope': 'photos, status, audio',
+            'response_type': 'token'
+        }
+
+        oauth_url = f'{oauth_base_url}?{urlencode(params, doseq=False, safe="", encoding=None, errors=None, quote_via=quote_plus)}'
+        return oauth_url
+        self.token = input('Input your VK_token:')
     def get_common_params(self):
         return {
             'access_token': self.token,
             'v': '5.131'
         }
-    def get_status(self):
-        params = self.get_common_params()
-        params.update({'user_id': self.user_id})
-        response = requests.get(f'{self.API_base_url}/status.get', params=params)
-        return response.json().get('response', {}).get('text')
-    def set_status(self, new_status):
-        params = self.get_common_params()
-        params.update({'user_id': self.user_id, 'text': new_status})
-        response = requests.get(f'{self.API_base_url}/status.set', params=params)
-        response.raise_for_status()
-
-    def replace_status(self, target, replace_str):
-        status = self.get_status()
-        new_status = status.replace(target, replace_str)
-        self.set_status(new_status)
 
     def get_prof_photos(self):
+        self.token = input('Input your token:')
         params = self.get_common_params()
         params.update({'owner_id': self.user_id, 'album_id': ['profile', 'wall'], 'extended': 1, 'rev': 0})
         response = requests.get(f'{self.API_base_url}/photos.get', params=params)
+        print(response.status_code)
         info = response.json()
         # pprint(info['response']['count'])
         i = info['response']['items']
         # pprint(i)
-        # file_dict = {}
         likes = []
         size = []
         link = []
@@ -86,6 +74,7 @@ class VK_get_photo:
         if info['response']['count'] <=5:
             for i in range(len(self.file_dict['url'])):
                 response = requests.get(self.file_dict['url'][i], stream=True)
+                print(response.status_code)
                 file_name.append(f"{self.file_dict['likes'][i]}.jpg")
                 with open(f"{self.file_dict['likes'][i]}.jpg", 'wb') as file:
                     total = int(response.headers.get('content-length', 0))
@@ -102,18 +91,27 @@ class VK_get_photo:
                             file.write(chunk)
         self.file_dict['file_name'] = file_name
 
+class Ya_disc:
+    base_url = 'https://cloud-api.yandex.net'
+    ya_token = input('input your ya.disc_oauth_token: ')
+    folder_name = input('input folder name for upload image\images:')
+
+    def __init__(self):
+        self.token = f'OAuth {self.ya_token}'
+        self.file_dict = vk_client.file_dict
     def upload_photos(self):
-        # params = {}
-        base_url = 'https://cloud-api.yandex.net'
-        headers = {'Authorization': 'OAuth '}
-        params = {'path': 'Image'}
-        response = requests.put(f'{base_url}/v1/disk/resources', params=params, headers=headers)
+        headers = {'Authorization': self.token}
+        params = {'path': self.folder_name}
+        response = requests.put(f'{self.base_url}/v1/disk/resources', params=params, headers=headers)
+        print(response.status_code)
         for i in tqdm.tqdm(self.file_dict['file_name']):
-            params['path'] = f'/Image/{i}'
-            response = requests.get(f'{base_url}/v1/disk/resources/upload', params=params, headers=headers)
+            params['path'] = f'/{self.folder_name}/{i}'
+            response = requests.get(f'{self.base_url}/v1/disk/resources/upload', params=params, headers=headers)
+            print(response.status_code)
             path_to_load = response.json().get('href', '')
             with open(f"{i}", 'rb') as file:
                 response = requests.put(path_to_load, files={'file': file}, stream=True)
+                print(response.status_code)
 
     def make_JSON_file(self):
         json_dict = {}
@@ -124,11 +122,12 @@ class VK_get_photo:
 
 
 if __name__ == '__main__':
-    # print(get_token())
-    vk_client = VK_get_photo(token, 817676891)
+    # vk_client = VK_get_photo(817676891)
+    vk_client = VK_get_photo(input('input your VK_ID:'))
+    print(vk_client.get_token())
     vk_client.get_prof_photos()
-    vk_client.upload_photos()
-    vk_client.make_JSON_file()
-    # print(vk_client.get_status())
-    # vk_client.set_status('Приветули!')
-    # vk_client.replace_status
+    ya_disc_upload_photo = Ya_disc()
+    ya_disc_upload_photo.upload_photos()
+    ya_disc_upload_photo.make_JSON_file()
+
+
